@@ -1,0 +1,40 @@
+version: 0.2
+phases:
+  pre_build:
+    commands:
+    # Set variable
+      - export EKS_CLUSTER_NAME=eks-byron-aucnet
+      - export EKS_KUBECTL_ROLE_ARN=arn:aws:iam::918000919743:role/kubectl-eks-aucnet
+
+    # Check tools
+      - echo To check tools version before deploy eks app.
+      - aws --version
+      - docker --version
+      - eksctl version
+      - which kubectl
+      - jq --version
+  build:
+    commands:
+      - echo Deploy started on `date`
+      - echo Build No is 
+      - echo $CODEBUILD_BUILD_NUMBER
+      - echo "Setting Environment Variables related to AWS CLI for Kube Config Setup"       
+      - CREDENTIALS=$(aws sts assume-role --role-arn $EKS_KUBECTL_ROLE_ARN --role-session-name aucnet --duration-seconds 900) 
+      - echo show CREDENTIALS
+      - echo $CREDENTIALS
+      - export AWS_ACCESS_KEY_ID="$(echo ${CREDENTIALS} | jq -r '.Credentials.AccessKeyId')"
+      - export AWS_SECRET_ACCESS_KEY="$(echo ${CREDENTIALS} | jq -r '.Credentials.SecretAccessKey')"
+      - export AWS_SESSION_TOKEN="$(echo ${CREDENTIALS} | jq -r '.Credentials.SessionToken')"
+      - export AWS_EXPIRATION=$(echo ${CREDENTIALS} | jq -r '.Credentials.Expiration')
+      # Setup kubectl with our EKS Cluster 
+      - echo "Update Kube Config"      
+      - aws eks update-kubeconfig --name $EKS_CLUSTER_NAME
+      # Apply changes to our Application using kubectl
+      - kubectl apply -f java-example.yml
+     
+  post_build:
+    commands:
+      - printf 'hello' > hello.txt
+artifacts:
+  files:
+    - 'hello.txt'

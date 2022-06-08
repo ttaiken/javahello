@@ -1,0 +1,62 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aucnet-ns
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: aucnet-ns
+  name: deployment-java-aucnet
+spec:
+  selector:
+    matchLabels:
+      app-group: aucnet-test01
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app-group: aucnet-test01
+    spec:
+      containers:
+      - image: 918000919743.dkr.ecr.ap-northeast-1.amazonaws.com/ecr-byron-aucnet:202206080328
+        imagePullPolicy: Always
+        name: app-2048
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: aucnet-ns
+  name: service01-aucnet
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: NodePort
+  selector:
+    app-group: aucnet-test01
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  namespace: aucnet-ns
+  name: ingress-2048
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: service01-aucnet
+              port:
+                number: 80

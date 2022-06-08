@@ -17,13 +17,17 @@ phases:
       - mkdir output
       - cp ./app/build/libs/app.jar output
       - cp ./Dockerfile output
-      - cp ./buildspecDocker.yml output
+      - cp ./buildspecDocker.yml ./output/buildspecDocker.yml
       - zip -j output.zip ./output/*
 artifacts:
   type: zip
   files:
     - 'output.zip'
-
+    - './app/build/libs/app.jar'
+    - 'Dockerfile'
+    - 'buildspecDocker.yml'
+    - 'buildspecEKS.yml'
+    - 'java-example.yml'
 cache:
   paths:
     - '/root/.gradle/caches/**/*' 
